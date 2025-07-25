@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG Creature Search</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Arial', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            color: #333;
+        }
+        .container { 
+            background: rgba(255,255,255,0.95); 
+            padding: 2rem; 
+            border-radius: 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px; 
+            width: 90%;
+            backdrop-filter: blur(10px);
+        }
+        h1 { 
+            text-align: center; 
+            margin-bottom: 2rem; 
+            color: #4a5568;
+            font-size: 2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-section { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 2rem; 
+        }
+        #search-input { 
+            flex: 1; 
+            padding: 12px 16px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 10px; 
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        #search-input:focus { 
+            outline: none; 
+            border-color: #667eea; 
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        #search-button { 
+            padding: 12px 24px; 
+            background: linear-gradient(135deg, #667eea, #764ba2); 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: transform 0.2s ease;
+        }
+        #search-button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        }
+        .creature-info { 
+            display: none; 
+            animation: fadeIn 0.5s ease;
+        }
+        .creature-info.show { 
+            display: block; 
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        .info-row { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 10px 0; 
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .info-row:last-child { 
+            border-bottom: none; 
+        }
+        .label { 
+            font-weight: bold; 
+            color: #4a5568;
+        }
+        .value { 
+            color: #2d3748;
+        }
+        #types { 
+            display: flex; 
+            gap: 8px; 
+            flex-wrap: wrap;
+        }
+        .type-element { 
+            background: #667eea; 
+            color: white; 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: bold;
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐉 RPG Creature Search</h1>
+        
+        <div class="search-section">
+            <input type="text" id="search-input" placeholder="Enter creature name or ID" required>
+            <button id="search-button">Search</button>
+        </div>
+        
+        <div class="creature-info" id="creature-info">
+            <div class="info-row">
+                <span class="label">Name:</span>
+                <span class="value" id="creature-name"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">ID:</span>
+                <span class="value" id="creature-id"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Weight:</span>
+                <span class="value" id="weight"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Height:</span>
+                <span class="value" id="height"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Types:</span>
+                <div id="types"></div>
+            </div>
+            <div class="info-row">
+                <span class="label">HP:</span>
+                <span class="value" id="hp"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Attack:</span>
+                <span class="value" id="attack"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Defense:</span>
+                <span class="value" id="defense"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Special Attack:</span>
+                <span class="value" id="special-attack"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Special Defense:</span>
+                <span class="value" id="special-defense"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Speed:</span>
+                <span class="value" id="speed"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const creatureInfo = document.getElementById('creature-info');
+        
+        const elements = {
+            name: document.getElementById('creature-name'),
+            id: document.getElementById('creature-id'),
+            weight: document.getElementById('weight'),
+            height: document.getElementById('height'),
+            types: document.getElementById('types'),
+            hp: document.getElementById('hp'),
+            attack: document.getElementById('attack'),
+            defense: document.getElementById('defense'),
+            specialAttack: document.getElementById('special-attack'),
+            specialDefense: document.getElementById('special-defense'),
+            speed: document.getElementById('speed')
+        };
+
+        async function searchCreature() {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            // Clear previous results
+            creatureInfo.classList.remove('show');
+
+            try {
+                const response = await fetch(`https://rpg-creature-api.freecodecamp.rocks/api/creature/${query.toLowerCase()}`);
+                
+                if (!response.ok) {
+                    alert('Creature not found');
+                    return;
+                }
+
+                const data = await response.json();
+                displayCreature(data);
+            } catch (error) {
+                alert('Creature not found');
+            }
+        }
+
+        function displayCreature(data) {
+            elements.name.textContent = data.name.toUpperCase();
+            elements.id.textContent = `#${data.id}`;
+            elements.weight.textContent = `Weight: ${data.weight}`;
+            elements.height.textContent = `Height: ${data.height}`;
+            
+            // Handle different possible API response structures
+            if (data.stats) {
+                if (typeof data.stats === 'object' && !Array.isArray(data.stats)) {
+                    // Object format: {hp: 65, attack: 80, ...}
+                    elements.hp.textContent = data.stats.hp;
+                    elements.attack.textContent = data.stats.attack;
+                    elements.defense.textContent = data.stats.defense;
+                    elements.specialAttack.textContent = data.stats.special_attack || data.stats['special-attack'];
+                    elements.specialDefense.textContent = data.stats.special_defense || data.stats['special-defense'];
+                    elements.speed.textContent = data.stats.speed;
+                } else if (Array.isArray(data.stats)) {
+                    // Array format: [{base_stat: 65}, {base_stat: 80}, ...]
+                    elements.hp.textContent = data.stats[0].base_stat;
+                    elements.attack.textContent = data.stats[1].base_stat;
+                    elements.defense.textContent = data.stats[2].base_stat;
+                    elements.specialAttack.textContent = data.stats[3].base_stat;
+                    elements.specialDefense.textContent = data.stats[4].base_stat;
+                    elements.speed.textContent = data.stats[5].base_stat;
+                }
+            }
+
+            // Clear and populate types
+            elements.types.innerHTML = '';
+            if (data.types) {
+                data.types.forEach(type => {
+                    const typeElement = document.createElement('div');
+                    typeElement.className = 'type-element';
+                    if (typeof type === 'string') {
+                        typeElement.textContent = type.toUpperCase();
+                    } else if (type.type && type.type.name) {
+                        typeElement.textContent = type.type.name.toUpperCase();
+                    } else if (type.name) {
+                        typeElement.textContent = type.name.toUpperCase();
+                    }
+                    elements.types.appendChild(typeElement);
+                });
+            }
+
+            creatureInfo.classList.add('show');
+        }
+
+        searchButton.addEventListener('click', searchCreature);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchCreature();
+        });
+    </script>
+</body>
+</html>
